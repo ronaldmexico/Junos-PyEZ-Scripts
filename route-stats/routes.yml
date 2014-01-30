@@ -1,0 +1,91 @@
+---
+
+### ------------------------------------------------------
+### show route <destination>
+### ------------------------------------------------------
+
+RouteTable:
+  rpc: get-route-information
+  args_key: destination
+  item: route-table/rt 
+  key: rt-destination
+  view: RouteTableView
+
+RouteTableView:
+  groups:
+    entry: rt-entry
+  fields_entry:
+    # fields taken from the group 'entry'
+    protocol: protocol-name
+    via: nh/via | nh/nh-local-interface
+    age: { age/@seconds : int }
+    nexthop: nh/to
+
+### ------------------------------------------------------
+### show route <destination> exact
+### ------------------------------------------------------
+
+RtExactTable:
+  rpc: get-route-information
+  args:
+    exact: True
+  args_key: destination
+  item: route-table
+  key: table-name
+  view: RtExactView
+ 
+RtExactView:
+  fields:
+    routes: _RtDstTable
+    dests: { destination-count : int }
+    total: { total-route-count : int }
+    active: { active-route-count : int }
+    holddown: { holddown-route-count : int }
+    hidden: { hidden-route-count : int }
+    table: table-name
+
+_RtDstTable:
+  item: rt
+  key: rt-destination
+  view: _CurSelView
+
+_CurSelView:
+  groups:
+    nh: 'rt-entry[current-active]/nh[selected-next-hop]'
+  fields_nh:
+    to: to
+    via: via | nh-local-interface
+    lsp: lsp-name
+    proto: ../protocol-name
+    age: { ../age/@seconds : int }
+  fields:
+    table: ../table-name
+
+### ------------------------------------------------------
+### show route summary
+### ------------------------------------------------------
+
+RouteSummaryTable:
+  rpc: get-route-summary-information
+  item: route-table
+  key: table-name
+  view: RouteSummaryView
+
+RouteSummaryView:
+  fields:
+    dests: { destination-count : int }
+    total: { total-route-count : int }
+    active: { active-route-count : int }
+    holddown: { holddown-route-count : int }
+    hidden: { hidden-route-count : int }
+    proto: _rspTable 
+
+_rspTable:
+  item: protocols
+  key: protocol-name
+  view: _rspView
+
+_rspView:
+  fields:
+    count: { protocol-route-count: int }
+    active: { active-route-count : int }
